@@ -1,0 +1,75 @@
+.App {
+  box-sizing: border-box;
+  .app-container {
+    
+    .app-row {
+      margin-top: 20px;
+      display: flex;
+
+      .side-bar-col {
+        display: none;
+        padding: 20px;
+        @media(min-width: 1000px){
+          display: block;
+          width: 30%;
+        }
+      }
+
+      .main-col {
+        padding: 20px;
+        width: 100%;
+
+        @media(min-width: 1000px){
+          width: 70%;
+        }
+
+        .wait {
+          font-size: 30px;
+          text-align: center;
+          @media(min-width: 1000px){
+            text-align: left;
+            margin-left: 40px;
+          }
+        }
+        .error {
+          color: rgb(255, 0, 0);
+          text-align: center;
+          @media(min-width: 1000px){
+            text-align: left;
+            margin-left: 40px;
+          }
+        }
+        .info {
+          color: rgb(0, 128, 0);
+          text-align: center;
+          @media(min-width: 1000px){
+            text-align: left;
+            margin-left: 40px;
+          }
+        }
+      }
+    }
+    footer{
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      padding: 8px;
+      div{
+        display: flex;
+        flex-wrap: wrap;
+        span {
+          margin-right: 6px;
+          margin-left: 6px;
+        }
+      }
+    }  
+  }
+}
+
+
+
+
+
+
+
+

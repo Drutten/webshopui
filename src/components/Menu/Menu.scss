@@ -1,0 +1,19 @@
+.menu {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+  @media(min-width: 1000px){
+    display: none;
+  }
+
+  li {
+    padding: 1em;
+    text-align: center;
+    width: 100%;
+    border-top: 1px solid rgb(209, 208, 208);
+    cursor: pointer;
+  }
+  li:hover{
+    background-color: rgb(233, 229, 229);
+  }
+}

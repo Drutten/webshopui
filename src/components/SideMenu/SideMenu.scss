@@ -1,0 +1,30 @@
+.side-menu {
+  display: none;
+  list-style-type: none;
+  padding: 0 20px;
+  margin: 0;
+  border: 1px solid rgb(209, 208, 208);
+  @media(min-width: 1000px){
+    display: flex;
+    flex-direction: column;
+  }
+
+  li {
+    text-align: left;
+    padding: 1em 0;
+    width: 100%;
+    border-top: 1px solid rgb(209, 208, 208);
+
+    span {
+      margin-right: 20px;
+      color: rgb(11, 132, 245);
+    }
+  }
+  li:first-child {
+    border: none;
+  }
+  li:hover{
+    cursor: pointer;
+    color: rgb(11, 132, 245);
+  }
+}
