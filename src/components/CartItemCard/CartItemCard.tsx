@@ -4,6 +4,7 @@ import ICartItem from '../../interfaces/ICartItem';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
 import { faTrashAlt } from '@fortawesome/free-solid-svg-icons';
+import IProduct from '../../interfaces/IProduct';
 
 interface ICartItemCardProps {
   cartItem: ICartItem;
@@ -38,7 +39,7 @@ class CartItemCard extends React.Component<ICartItemCardProps, ICartItemState> {
 
   updateCart(){
     let value = this.state.quantity;
-    this.props.onUpdateCart(this.props.cartItem.Id, value);
+    this.props.onUpdateCart(this.props.cartItem.id, value);
     this.setState({
       quantity: 0
     });
@@ -47,10 +48,10 @@ class CartItemCard extends React.Component<ICartItemCardProps, ICartItemState> {
 
   //flytta till app
   calculateTotal(): number {
-    let total = this.props.cartItem.Price;
-    let percentOff = this.props.cartItem.PercentOff;
-    let count = this.props.cartItem.Count;
-    if(count > 1){
+    let total = this.props.cartItem.price;
+    let percentOff = this.props.cartItem.percentoff;
+    let count = this.props.cartItem.count;
+    if(count && count > 1){
       total *= count;
     }
     if(percentOff){
@@ -61,11 +62,11 @@ class CartItemCard extends React.Component<ICartItemCardProps, ICartItemState> {
 
 
   getPrice(): string{
-    let priceString = `$${this.props.cartItem.Price.toFixed(2)}`;
-    let total = this.props.cartItem.Price;
-    let percentOff = this.props.cartItem.PercentOff;
-    let count = this.props.cartItem.Count;
-    if(count > 1){
+    let priceString = `$${this.props.cartItem.price.toFixed(2)}`;
+    let total = this.props.cartItem.price;
+    let percentOff = this.props.cartItem.percentoff;
+    let count = this.props.cartItem.count;
+    if(count && count > 1){
       total *= count;
       priceString += ` x ${count}`;
       if(!percentOff){
@@ -83,7 +84,7 @@ class CartItemCard extends React.Component<ICartItemCardProps, ICartItemState> {
 
 
   getDiscountClass(): string{
-    if(this.props.cartItem.PercentOff){
+    if(this.props.cartItem.percentoff){
       return 'discount';
     }
     return '';
@@ -99,20 +100,20 @@ class CartItemCard extends React.Component<ICartItemCardProps, ICartItemState> {
     
     return(
       <div className="cart-item-card">
-        {(this.props.cartItem.PercentOff)? <div className="percent-off">{this.props.cartItem.PercentOff}% Off</div> : ''}
-        <div className="image-container"><img src={this.props.cartItem.ImageUrl} alt={this.props.cartItem.Product}/></div>
+        {(this.props.cartItem.percentoff)? <div className="percent-off">{this.props.cartItem.percentoff}% Off</div> : ''}
+        <div className="image-container"><img src={this.props.cartItem.imageurl} alt={this.props.cartItem.name}/></div>
         <div className="text-container">
           
           <div className="text-field">
-            <h4>{this.props.cartItem.Product}</h4>
-            <p>{this.props.cartItem.Category}</p>
+            <h4>{this.props.cartItem.name}</h4>
+            <p>{this.props.cartItem.category}</p>
             <p className={this.getDiscountClass()}>{this.getPrice()}</p>
           </div>
           
           <div className="button-field">
-            <div className="quantity"><span>Quantity</span><input type="number" onChange={(e)=>this.handleChangeQuantity(e)} value={this.state.quantity || this.props.cartItem.Count}/></div>
+            <div className="quantity"><span>Quantity</span><input type="number" onChange={(e)=>this.handleChangeQuantity(e)} value={this.state.quantity || this.props.cartItem.count}/></div>
             <span className="sync-button" onClick={()=>this.updateCart()}>{sync} Update Cart</span>
-            <span className="trash-button" onClick={()=>this.props.onDeleteCartItem(this.props.cartItem.Id)}>{trash} Remove</span>
+            <span className="trash-button" onClick={()=>this.props.onDeleteCartItem(this.props.cartItem.id)}>{trash} Remove</span>
           </div>
         </div>
       </div>

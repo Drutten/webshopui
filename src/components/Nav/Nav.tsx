@@ -22,7 +22,7 @@ interface INavProps{
   customers: ICustomer[];
   currentCustomer: ICustomer | null;
   favorites: IProduct[];
-  basicCart: ICartItem[];
+  cart: ICartItem[];
   orders: IOrder[];
   isLoadingCustomers: boolean;
   isLoadingFavorites: boolean;
@@ -96,7 +96,7 @@ class Nav extends React.Component <INavProps, INavState>{
     this.props.onSearch(searchText);    
 }
 
-
+  // ordrar hanteras inte för närvarande, resulterar i 0
   getLengthOfNotDeliveredOrders():number{
     //Räkna bort delivered och canceled
     const filteredOrders = this.props.orders.filter(item=>{
@@ -105,7 +105,7 @@ class Nav extends React.Component <INavProps, INavState>{
     return filteredOrders.length;
   }
 
-
+  // ordrar hanteras inte för närvarande, resulterar i 0
   getTotalOfNotDeliveredOrders():string{
     let total = 0;
     const filteredOrders = this.props.orders.filter(item=>{
@@ -120,10 +120,11 @@ class Nav extends React.Component <INavProps, INavState>{
 
   getCartCount():number{
     let count = 0;
-    this.props.basicCart.forEach(item=>{
-      count += item.Count
+    this.props.cart.forEach(item =>{
+      if (item.count !== undefined) {
+        count += item.count;
+      }
     })
-    //return (this.props.basicCart)? this.props.basicCart.Count : 0;
     return count;
   }
 
@@ -132,13 +133,13 @@ class Nav extends React.Component <INavProps, INavState>{
     let total = 0;
     let totalString = '';
 
-    this.props.basicCart.forEach(item =>{
-      let itemTotal = item.Price;
-      if(item.Count > 1){
-        itemTotal *= item.Count;
+    this.props.cart.forEach(item =>{
+      let itemTotal = item.price;
+      if(item.count && item.count > 1){
+        itemTotal *= item.count;
       }
-      if(item.PercentOff){
-        let discount = 100 - item.PercentOff;
+      if(item.percentoff){
+        let discount = 100 - item.percentoff;
         itemTotal *= (discount * 0.01);
       }
       total += itemTotal;
@@ -150,7 +151,7 @@ class Nav extends React.Component <INavProps, INavState>{
 
 
   getCurrentCustomer(): string{
-    return (this.props.currentCustomer)? ((this.props.currentCustomer.FirstName)? this.props.currentCustomer.FirstName : this.props.currentCustomer.Email) : ''; 
+    return (this.props.currentCustomer)? ((this.props.currentCustomer.firstName)? this.props.currentCustomer.firstName : this.props.currentCustomer.email) : ''; 
   }
 
 
@@ -177,7 +178,7 @@ class Nav extends React.Component <INavProps, INavState>{
             <div className='user'><div>{userIcon}&nbsp;{(this.props.isLoadingCustomers)? spinner : ((this.props.hasErrorUsers)? 'ERROR' : this.getCurrentCustomer())}</div><span onClick={this.handleDisplayUsers}>{arrowDown}</span></div>
               <ul className={(this.state.areDisplayedUsers)? 'displayed' : 'hidden'}>
                 {this.props.customers.map(item =>{
-                  return <li onClick={()=>this.props.onChangeCurrentCustomer(item)} key={item.Id}>{(item.FirstName)? item.FirstName : item.Email}</li>      
+                  return <li onClick={()=>this.props.onChangeCurrentCustomer(item)} key={item.id}>{(item.firstName)? item.firstName : item.email}</li>      
                 })}
               </ul>
             </div>

@@ -14,17 +14,13 @@ import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { faEnvelope } from '@fortawesome/free-solid-svg-icons';
 import { faPhoneAlt } from '@fortawesome/free-solid-svg-icons';
 import CartItemCard from './components/CartItemCard/CartItemCard';
-import IFavorite from './interfaces/IFavorite';
-import ICartProduct from './interfaces/ICartProduct';
-import ICartUpdateProduct from './interfaces/ICartUpdateProduct';
-
 
 
 interface IAppState{
   currentCustomer: ICustomer | null;
+  switchCustomerToggler: boolean;
   customers: ICustomer[];
   favorites: IProduct[];
-  //basicCart: IBasicCart | null;
   basicCart: ICartItem[];
   orders: IOrder[];
   cartItems: ICartItem[];
@@ -51,9 +47,9 @@ class App extends React.Component<{}, IAppState> {
 
     this.state = {
       currentCustomer: null,
+      switchCustomerToggler: false,
       customers: [],
       favorites: [],
-      //basicCart: null,
       basicCart: [],
       orders: [],
       cartItems: [],
@@ -76,9 +72,9 @@ class App extends React.Component<{}, IAppState> {
     this.handleChangeCurrentCustomer = this.handleChangeCurrentCustomer.bind(this);
     this.handleSearch = this.handleSearch.bind(this);
     this.displayFavorites = this.displayFavorites.bind(this);
-    this.handleFetchByCategory = this.handleFetchByCategory.bind(this);
+    this.handleFilterByCategory = this.handleFilterByCategory.bind(this);
     this.handleFetchAllProducts = this.handleFetchAllProducts.bind(this);
-    this.handleFetchCartItems = this.handleFetchCartItems.bind(this);
+    this.displayCartItems = this.displayCartItems.bind(this);
     this.handleAddToFavorites = this.handleAddToFavorites.bind(this);
     this.handleDeleteFromFavorites = this.handleDeleteFromFavorites.bind(this);
     this.handleAddToCart = this.handleAddToCart.bind(this);
@@ -92,114 +88,72 @@ class App extends React.Component<{}, IAppState> {
 
 
   componentDidMount(){
-    this.fetchCustomers('https://rdshop.azurewebsites.net/api/customers');
-    this.fetchProducts('https://rdshop.azurewebsites.net/api/products');
+    this.mockCustomers();
+    this.fetchProducts();
   }
 
 
   componentDidUpdate(prevProps: any, prevState: IAppState) {
-    //om currentCustomer har ändrats, hämtar alla produkter
-    if(this.state.currentCustomer !== prevState.currentCustomer){  
-      this.fetchProducts('https://rdshop.azurewebsites.net/api/products'); 
+    //om currentCustomer har ändrats till annan customer, hämtar alla produkter
+    if (this.state.switchCustomerToggler !== prevState.switchCustomerToggler) {
+      this.fetchProducts(); 
     } 
   }
 
-
-  async fetchCustomers(url: string){
-    this.setState({
-      isLoadingCustomers: true,
-      hasErrorUsers: false
-    });
-    const resultTuple = await this.service.getItems<ICustomer>(url);
-    const fetchedCustomers = resultTuple[0];
-    const message = resultTuple[1];
+  mockCustomers() {
+    const mockedCustomers: ICustomer[] = [
+      {
+        id: 1,
+        email: 'anna@netmail.se',
+        firstName: 'Anna',
+        lastName: 'Hansson',
+        favorites: [],
+        cartItems: [],
+        orders: []
+      },
+      {
+        id: 2,
+        email: 'kalle@bmail.se',
+        firstName: 'Kalle',
+        lastName: 'Svan',
+        favorites: [],
+        cartItems: [],
+        orders: []
+      },
+      { 
+        id: 3,
+        email: 'pia@bmail.se',
+        firstName: 'Pia',
+        lastName: 'Larsson',
+        favorites: [],
+        cartItems: [],
+        orders: []
+      }
+    ];
     let filteredCustomers: ICustomer[] = [];
     let customer: ICustomer | null = null;
-    //console.log(fetchedCustomers);
-    if(fetchedCustomers.length){
-      customer = fetchedCustomers[0];
-      filteredCustomers = fetchedCustomers.filter(item=>{
-        return item.Id !== fetchedCustomers[0].Id;
+    if(mockedCustomers.length){
+      customer = mockedCustomers[0];
+      filteredCustomers = mockedCustomers.filter(item=>{
+        return item.id !== mockedCustomers[0].id;
       })
-      this.fetchFavorites(`https://rdshop.azurewebsites.net/api/favorites?customerId=${fetchedCustomers[0].Id}`);
-      this.fetchBasicCart(`https://rdshop.azurewebsites.net/api/cartproducts?customerId=${fetchedCustomers[0].Id}`);
-      this.fetchOrders(`https://rdshop.azurewebsites.net/api/orders?customerId=${fetchedCustomers[0].Id}`);  
     }
     this.setState({
-      customers : filteredCustomers,
-      currentCustomer : customer,
-      isLoadingCustomers: false,
-      hasErrorUsers: message.length > 0
-    });  
-  }
-
-
-  async fetchFavorites(url: string){
-    this.setState({
-      isLoadingFavorites: true,
-      hasErrorFavorites: false
-    });
-    const resultTuple = await this.service.getItems<IProduct>(url);
-    const fetchedFavorites = resultTuple[0];
-    let message = resultTuple[1];
-    let displayedProducts = [...this.state.products];
-    if(this.state.areDisplayedFavorites){
-      displayedProducts = fetchedFavorites;
-    }
-    //console.log(fetchedFavorites);
-    this.setState({
-      favorites: fetchedFavorites,
-      products: displayedProducts,
-      isLoadingFavorites: false,
-      hasErrorFavorites: message.length > 0
+      customers: filteredCustomers,
+      currentCustomer: customer
     });
   }
 
 
 
-  async fetchBasicCart(url: string){
-    this.setState({
-      isLoadingBasicCart: true,
-      hasErrorBasicCart: false
-    });
-    const resultTuple = await this.service.getItems<ICartItem>(url);
-    const fetchedBasicCart = resultTuple[0];
-    let message = resultTuple[1];
-    //console.log(fetchedBasicCart);
-    this.setState({
-      basicCart: fetchedBasicCart,
-      isLoadingBasicCart: false,
-      hasErrorBasicCart: message.length > 0
-    });
-  }
-
-
-
-  async fetchOrders(url: string){
-    this.setState({
-      isLoadingOrders: true,
-      hasErrorOrders: false
-    });
-    const resultTuple = await this.service.getItems<IOrder>(url);
-    const fetchedOrders = resultTuple[0];
-    let message = resultTuple[1];
-    //console.log(fetchedOrders);
-    this.setState({
-      orders: fetchedOrders,
-      isLoadingOrders: false,
-      hasErrorOrders: message.length > 0
-    });
-  }
-
-
-  async fetchProducts(url: string){
-    //Loading products
+  
+  async fetchProducts(){
     this.setState({
       isLoadingProducts: true,
       areCartItems: false,
       infoMessage: ''
     });
-    const resultTuple = await this.service.getItems<IProduct>(url);
+    const resultTuple = await this.service.getItems();
     const fetchedProducts = resultTuple[0];
     let message = resultTuple[1];
     let info = '';
@@ -218,23 +172,42 @@ class App extends React.Component<{}, IAppState> {
 
 
 
-  async fetchCartItems(url: string){
+
+  handleChangeCurrentCustomer(customer: ICustomer){
+    const allCustomers = (this.state.currentCustomer) ?
+    [...this.state.customers, this.state.currentCustomer] : [...this.state.customers];
+    
+    const filteredCustomers = allCustomers.filter(item=>{
+      return item.id !== customer.id;
+    });
+    this.setState({
+      customers: filteredCustomers,
+      currentCustomer: customer,
+      switchCustomerToggler: !this.state.switchCustomerToggler
+    });  
+  }
+
+
+  async handleFilterByCategory(categoryId: number){
     this.setState({
       isLoadingProducts: true,
-      areCartItems: true,
+      areCartItems: false,
       infoMessage: ''
     });
-    const resultTuple = await this.service.getItems<ICartItem>(url);
-    const fetchedCartItems = resultTuple[0];
+    const resultTuple = await this.service.getItems();
+    const fetchedProducts = resultTuple[0];
     let message = resultTuple[1];
     let info = '';
-    if(fetchedCartItems.length === 0 && message.length === 0){
-      info = 'Cart is empty';
+    let filteredProducts: IProduct[] = [];
+    if (fetchedProducts.length > 0) {
+      filteredProducts = fetchedProducts.filter(item => item.category === categoryId);
+    }
+    if(fetchedProducts.length === 0 || filteredProducts.length === 0 && message.length === 0){
+      info = 'Not found';
     }
     if(message.indexOf('404') !== -1){message = '404 Not Found';}
     this.setState({
-      cartItems: fetchedCartItems,
-      basicCart: fetchedCartItems,
+      products: filteredProducts,
       isLoadingProducts: false,
       areDisplayedFavorites: false,
       errorMessage: message,
@@ -243,158 +216,149 @@ class App extends React.Component<{}, IAppState> {
   }
 
 
-
-  async addFavorite(url: string, data: IFavorite){
-    
-    await this.service.addItem<IFavorite>(url, data);
-    if(this.state.currentCustomer){
-      this.fetchFavorites(`https://rdshop.azurewebsites.net/api/favorites?customerId=${this.state.currentCustomer.Id}`);
-    }
-  }
-
-
-  async deleteFavorite(url: string){
-    await this.service.deleteItem(url);
-    if(this.state.currentCustomer){
-      this.fetchFavorites(`https://rdshop.azurewebsites.net/api/favorites?customerId=${this.state.currentCustomer.Id}`);
-    }
-  }
-
-
-
-  async addCartProduct(url: string, data: ICartProduct){
-    await this.service.addItem<ICartProduct>(url, data);
-    if(this.state.currentCustomer){ 
-      this.fetchBasicCart(`https://rdshop.azurewebsites.net/api/cartproducts?customerId=${this.state.currentCustomer.Id}`); 
-    }   
-  }
-
-
-  async updateCartProduct(url: string, data: ICartUpdateProduct){
-    await this.service.updateItem<ICartUpdateProduct>(url, data);
-    //Anropas endast i cart
-    this.handleFetchCartItems();
-  }
-
-
-  async deleteCartProduct(url: string){
-    await this.service.deleteItem(url);
-    
-    if(this.state.areCartItems){
-      this.handleFetchCartItems();
-    }
-    else if(this.state.currentCustomer){
-      this.fetchBasicCart(`https://rdshop.azurewebsites.net/api/cartproducts?customerId=${this.state.currentCustomer.Id}`);
-    }
-  }
-
-
-
-
-  handleChangeCurrentCustomer(customer: ICustomer){
-    const allCustomers = (this.state.currentCustomer) ?
-    [...this.state.customers, this.state.currentCustomer] : [...this.state.customers];
-    
-    const filteredCustomers = allCustomers.filter(item=>{
-      return item.Id !== customer.Id;
-    });
-    this.fetchFavorites(`https://rdshop.azurewebsites.net/api/favorites?customerId=${customer.Id}`);
-    this.fetchBasicCart(`https://rdshop.azurewebsites.net/api/cartproducts?customerId=${customer.Id}`);
-    this.fetchOrders(`https://rdshop.azurewebsites.net/api/orders?customerId=${customer.Id}`);
   
-    this.setState({
-      customers: filteredCustomers,
-      currentCustomer: customer
-    });  
-  }
-
-
-  handleFetchByCategory(categoryId: number){
-    this.fetchProducts(`https://rdshop.azurewebsites.net/api/products?categoryId=${categoryId}`);
-  }
-
-
-  handleFetchCartItems(){
-    if(this.state.currentCustomer && !this.state.hasErrorBasicCart){
-      this.fetchCartItems(`https://rdshop.azurewebsites.net/api/cartproducts?customerId=${this.state.currentCustomer.Id}`);
-    }
-    else{
-      this.setState({errorMessage: 'Cart can not be displayed'});
-    }    
-  }
-
 
   handleFetchAllProducts(){
-    this.fetchProducts(`https://rdshop.azurewebsites.net/api/products`);
+    this.fetchProducts();
   }
 
 
 
-  handleSearch(searchText: string) {
-    this.fetchProducts(`https://rdshop.azurewebsites.net/api/search?s=${searchText}`);    
+  async handleSearch(searchText: string) {
+    this.setState({
+      isLoadingProducts: true,
+      areCartItems: false,
+      infoMessage: ''
+    });
+    const resultTuple = await this.service.getItems();
+    const fetchedProducts = resultTuple[0];
+    let message = resultTuple[1];
+    let info = '';
+    let filteredProducts: IProduct[] = [];
+    if (fetchedProducts.length > 0) {
+      filteredProducts = fetchedProducts.filter(item => item.name.toLowerCase().indexOf(searchText.toLowerCase()) !== -1);
+    }
+    if(fetchedProducts.length === 0 || filteredProducts.length === 0 && message.length === 0){
+      info = 'Not found';
+    }
+    if(message.indexOf('404') !== -1){message = '404 Not Found';}
+    this.setState({
+      products: filteredProducts,
+      isLoadingProducts: false,
+      areDisplayedFavorites: false,
+      errorMessage: message,
+      infoMessage: info  
+    });    
   }
 
 
 
   handleAddToFavorites(product: number){
     if(this.state.currentCustomer){
-      const data = {
-        customerId: this.state.currentCustomer.Id,
-        productId: product
+      let addedProduct = this.state.products.find(item => item.id === product);
+      let updatedCustomer = {...this.state.currentCustomer};
+      if (addedProduct) {
+        updatedCustomer.favorites.push(addedProduct);
+        this.setState({
+          currentCustomer: updatedCustomer
+        });
       }
-      this.addFavorite('https://rdshop.azurewebsites.net/api/favorites', data);
     }
   }
 
 
   handleDeleteFromFavorites(product: number){
     if(this.state.currentCustomer){
-      this.deleteFavorite(`https://rdshop.azurewebsites.net/api/favorites?customerId=${this.state.currentCustomer.Id}&productId=${product}`);
-    }  
+      let updatedCustomer = {...this.state.currentCustomer};
+      updatedCustomer.favorites.forEach((item, idx) => {
+        if (item.id === product) {
+          updatedCustomer.favorites.splice(idx, 1);
+        }
+      });
+      this.setState({
+        currentCustomer: updatedCustomer
+      });
+      if (this.state.areDisplayedFavorites) {
+        this.displayFavorites();
+      } 
+    }
   }
 
 
   handleAddToCart(product: number){
-    if(this.state.currentCustomer){
-      const data = {
-        customerId: this.state.currentCustomer.Id,
-        productId: product,
-        count: 1
+    if(this.state.currentCustomer && !this.isInCart(product)){
+      let addedProduct = this.state.products.find(item => item.id === product);
+      let cartItem = ({...addedProduct, count: 1} as ICartItem);
+      let updatedCustomer = {...this.state.currentCustomer};
+      if (cartItem) {
+        updatedCustomer.cartItems.push(cartItem);
+        this.setState({
+          currentCustomer: updatedCustomer
+        });
       }
-      this.addCartProduct('https://rdshop.azurewebsites.net/api/cartproducts', data);
-    } 
+    }
   }
 
 
 
   handleUpdateCart(product: number, quantity: number){
-    if(this.state.currentCustomer){
-      const data = {
-        count: quantity
+    if(this.state.currentCustomer && this.isInCart(product)){
+      let updatedCartItem = this.state.currentCustomer.cartItems.find(item => item.id === product);
+      let cartItem = ({...updatedCartItem} as ICartItem);
+      let updatedCustomer = {...this.state.currentCustomer};
+      if (cartItem) {
+        cartItem.count = quantity;
+        updatedCustomer.cartItems.forEach((item, idx) => {
+          if (item.id === product) {
+            updatedCustomer.cartItems.splice(idx, 1, cartItem);
+          }
+        });
+        this.setState({
+          currentCustomer: updatedCustomer
+        });
       }
-      this.updateCartProduct(`https://rdshop.azurewebsites.net/api/cartproducts?customerId=${this.state.currentCustomer.Id}&productId=${product}`, data);
     }
   }
 
 
   
   handleDeleteFromCart(product: number){
-    if(this.state.currentCustomer){
-      this.deleteCartProduct(`https://rdshop.azurewebsites.net/api/cartproducts?customerId=${this.state.currentCustomer.Id}&productId=${product}`);
+    if(this.state.currentCustomer && this.isInCart(product)){
+      let updatedCustomer = {...this.state.currentCustomer};
+      updatedCustomer.cartItems.forEach((item, idx) => {
+        if (item.id === product) {
+          updatedCustomer.cartItems.splice(idx, 1);
+        }
+      });
+      this.setState({
+        currentCustomer: updatedCustomer
+      });
+      if (this.state.areCartItems) {
+        this.displayCartItems();
+      }
     }
+  }
+
+
+  private isInCart(id: number): boolean {
+    let inCart = false;
+    this.state.currentCustomer?.cartItems.forEach(item => {
+      if (item.id === id) {
+        inCart = true;
+      }
+    });
+    return inCart;
   }
 
 
   
 
-
-
   displayFavorites(){
-    if(!this.state.hasErrorFavorites){
+    if (this.state.currentCustomer) {
       let displayedProducts: IProduct[] = [];
       let info = '';
-      if(this.state.favorites.length){
-        displayedProducts = [...this.state.favorites];
+      if (this.state.currentCustomer.favorites.length) {
+        displayedProducts = [...this.state.currentCustomer.favorites];
       }
       else{
         info = 'No favorites yet';
@@ -407,10 +371,29 @@ class App extends React.Component<{}, IAppState> {
         areDisplayedFavorites: true
       });
     }
-    else{
-      this.setState({errorMessage: 'Favorites can not be displayed'})
-    } 
   }
+
+
+  displayCartItems(){
+    if (this.state.currentCustomer) {
+      let displayedProducts: IProduct[] = [];
+      let info = '';
+      if (this.state.currentCustomer.cartItems.length) {
+        displayedProducts = [...this.state.currentCustomer.cartItems];
+      }
+      else{
+        info = 'Cart is empty';
+      }
+      this.setState({
+        products: displayedProducts,
+        infoMessage: info,
+        errorMessage: '',
+        areCartItems: true,
+        areDisplayedFavorites: false
+      });
+    }   
+  }
+
 
 
 
@@ -427,9 +410,9 @@ class App extends React.Component<{}, IAppState> {
         <Nav 
           customers={this.state.customers} 
           currentCustomer={this.state.currentCustomer}
-          favorites={this.state.favorites}
-          basicCart={this.state.basicCart}
-          orders={this.state.orders}
+          favorites={(this.state.currentCustomer)? this.state.currentCustomer.favorites: []}
+          cart={(this.state.currentCustomer)? this.state.currentCustomer.cartItems: []}
+          orders={(this.state.currentCustomer)? this.state.currentCustomer.orders: []}
           isLoadingCustomers={this.state.isLoadingCustomers}
           isLoadingFavorites={this.state.isLoadingFavorites}
           isLoadingBasicCart={this.state.isLoadingBasicCart}
@@ -438,11 +421,11 @@ class App extends React.Component<{}, IAppState> {
           hasErrorBasicCart={this.state.hasErrorBasicCart}
           hasErrorOrders={this.state.hasErrorOrders}
           hasErrorUsers={this.state.hasErrorUsers}
-          onFetchByCategory={this.handleFetchByCategory}
+          onFetchByCategory={this.handleFilterByCategory}
           onChangeCurrentCustomer={this.handleChangeCurrentCustomer}
           onSearch={this.handleSearch}
           onDisplayFavorites={this.displayFavorites}
-          onGetCart={this.handleFetchCartItems}
+          onGetCart={this.displayCartItems}
           onGetProducts={this.handleFetchAllProducts}
         />
 
@@ -451,21 +434,21 @@ class App extends React.Component<{}, IAppState> {
 
 
             <div className="side-bar-col">
-              <SideMenu onFetchByCategory={this.handleFetchByCategory}/>
+              <SideMenu onFilterByCategory={this.handleFilterByCategory}/>
             </div>
 
             <div className="main-col">
-              {this.state.errorMessage && <h3 className="error">{this.state.errorMessage}</h3>}
-              {this.state.infoMessage && <h3 className="info">{this.state.infoMessage}</h3>}
+              {this.state.errorMessage && <div><h3 className="error">{this.state.errorMessage}</h3><button onClick={this.handleFetchAllProducts} className="back-btn">Products</button></div>}
+              {this.state.infoMessage && <div><h3 className="info">{this.state.infoMessage}</h3><button onClick={this.handleFetchAllProducts} className="back-btn">Products</button></div>}
 
               
               {(this.state.isLoadingProducts)
               ? <div className="wait">{spinner}</div>
               :  ((this.state.areCartItems)
                   ? (<div className="product-container">
-                    {this.state.cartItems.map(item =>{
+                    {this.state.currentCustomer?.cartItems.map(item =>{
                       return(<CartItemCard 
-                        key={item.Id} 
+                        key={item.id} 
                         cartItem={item}
                         onUpdateCart={this.handleUpdateCart}
                         onDeleteCartItem={this.handleDeleteFromCart}
@@ -475,10 +458,10 @@ class App extends React.Component<{}, IAppState> {
                   : (<div className="product-container">
                     {this.state.products.map(item =>{
                       return(<ProductCard 
-                        key={item.Id} 
+                        key={item.id} 
                         product={item}
-                        favorites={this.state.favorites}
-                        basicCart={this.state.basicCart} 
+                        favorites={(this.state.currentCustomer)? this.state.currentCustomer.favorites: []}
+                        cart={(this.state.currentCustomer)? this.state.currentCustomer.cartItems: []}
                         onAddFavorite={this.handleAddToFavorites}
                         onDeleteFavorite={this.handleDeleteFromFavorites}
                         onAddCartItem={this.handleAddToCart}

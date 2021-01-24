@@ -1,13 +1,11 @@
-export default interface IProduct {
-  Id: number,
-  BrandId: number,
-  Product: string,
-  Price: number,
-  PercentOff: number,
-  Description: string,
-  AvgStars: number,
-  TaxId: number,
-  Category: string,
-  ImageUrl: string,
-  Count: number
+export default interface ICartItem {
+  id: number,
+  name: string,
+  price: number,
+  percentoff: number,
+  description: string,
+  avgstars: number,
+  category: number,
+  imageurl: string,
+  count: number
 }
